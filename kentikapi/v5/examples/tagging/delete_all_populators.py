@@ -1,5 +1,4 @@
-from kentikapi.v5.tagging import batch as b
-from kentikapi.v5.tagging import client as c
+from kentikapi.v5 import tagging
 
 #
 # Example: Delete all populators for a HyperScale custom dimension
@@ -20,12 +19,12 @@ option_custom_dimension = 'c_my_column'
 # -----
 # initialize a batch that will replace all populators
 # -----
-batch = b.Batch(True)
+batch = tagging.Batch(True)
 
 # no populators entered, so everything just gets deleted
 
 # -----
 # Showtime! Submit the batch as populators for the configured custom dimension
 # -----
-client = c.Client(option_api_email, option_api_token)
+client = tagging.Client(option_api_email, option_api_token)
 client.submit_populator_batch(option_custom_dimension, batch)
