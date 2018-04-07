@@ -1,5 +1,4 @@
-from kentikapi.v5.tagging import batch as b
-from kentikapi.v5.tagging import client as c
+from kentikapi.v5 import tagging
 
 #
 # Example: Replacing all populators for a Hyperscale custom dimension
@@ -13,7 +12,7 @@ from kentikapi.v5.tagging import client as c
 # ---------------------------------------------------
 # Change these options:
 option_api_email = 'me@email.com'
-option_api_token = '673244805e76d01d01e42d32c56d64c2'
+option_api_token = '123456d77afce9c33c09f8b88b52ff38'
 option_custom_dimension = 'c_my_column'
 # ---------------------------------------------------
 
@@ -21,22 +20,22 @@ option_custom_dimension = 'c_my_column'
 # -----
 # initialize a batch that will replace all populators
 # -----
-batch = b.Batch(True)
+batch = tagging.Batch(True)
 
 
 # -----
 # add a few populators with unique values - just IP addresses
 # -----
 
-crit = b.Criteria("dst")
+crit = tagging.Criteria("dst")
 crit.add_ip_address("1.2.3.4")
 batch.add_upsert("src_ip1", crit)
 
-crit = b.Criteria("src")
+crit = tagging.Criteria("src")
 crit.add_ip_address("2.3.4.5")
 batch.add_upsert("src_ip2", crit)
 
-crit = b.Criteria("dst")
+crit = tagging.Criteria("dst")
 crit.add_ip_address("3.4.5.6")
 batch.add_upsert("dst_ip1", crit)
 
@@ -45,21 +44,21 @@ batch.add_upsert("dst_ip1", crit)
 # add a few populators with the same value - IP addresses and ports
 # -----
 
-crit = b.Criteria("dst")
+crit = tagging.Criteria("dst")
 crit.add_ip_address("10.10.10.1")
 crit.add_ip_address("10.10.10.2")
 crit.add_port_range(33, 55)
 crit.add_port(66)
 batch.add_upsert("multi", crit)
 
-crit = b.Criteria("dst")
+crit = tagging.Criteria("dst")
 crit.add_ip_address("11.11.11.1")
 crit.add_ip_address("11.11.11.2")
 crit.add_port_range(66, 77)
 crit.add_port(88)
 batch.add_upsert("multi", crit)
 
-crit = b.Criteria("dst")
+crit = tagging.Criteria("dst")
 crit.add_ip_address("12.12.12.1")
 crit.add_ip_address("12.12.12.2")
 crit.add_port_range(88, 99)
@@ -71,7 +70,7 @@ batch.add_upsert("multi", crit)
 # add a complicated populator that uses all fields in the criteria
 # -----
 
-crit = b.Criteria("either")
+crit = tagging.Criteria("either")
 
 # ports
 crit.add_port(4)
@@ -168,5 +167,5 @@ batch.add_delete("old_tag_3")
 # -----
 # Showtime! Submit the batch as populators for the configured custom dimension
 # -----
-client = c.Client(option_api_email, option_api_token)
+client = tagging.Client(option_api_email, option_api_token)
 client.submit_populator_batch(option_custom_dimension, batch)

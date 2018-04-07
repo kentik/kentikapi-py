@@ -11,7 +11,7 @@ from kentikapi.v5 import tagging
 # ---------------------------------------------------
 # Change these options:
 option_api_email = 'me@email.com'
-option_api_token = '673244805e76d01d01e42d32c56d64c2'
+option_api_token = '123456d77afce9c33c09f8b88b52ff38'
 option_custom_dimension = 'c_my_column'
 # ---------------------------------------------------
 
