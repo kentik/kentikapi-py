@@ -49,3 +49,11 @@ Same as above, or do nothing if you're still in your virtual environment.
 __Run:__
 
     python delete_all_populators.py
+
+
+Exit virtal environment
+-----------------------
+
+If you're still in your virtual environment, exit with:
+
+    deactivate
