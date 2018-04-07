@@ -26,7 +26,7 @@ __Setup environment:__
 
 __Run:__
 
-  python populator_batch.py
+    python populator_batch.py
 
 
 Deleting all populators
