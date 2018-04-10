@@ -28,10 +28,14 @@ In your Python code, import the tagging classes of the API module:
 
 ### Initializing a batch
 
-The batch constructor takes a single parameter: a boolean that signals whether the batch processor should
-delete any populators for this custom dimension that are not explicitly mentioned in the batch:
+The batch constructor takes a single parameter, a boolean that signals whether the batch processor should
+delete any populators for this custom dimension that are not explicitly mentioned in the batch. If you pass
+`True` into the constructor, then you must submit the entire state of this custom dimension. With this 
+"replace-all" functionality, you never need to keep track of what populators are already defined in the Kentik
+database - the batch processor takes care of all of that for you.
 
-    # this batch will delete all populators for this custom dimension that aren't explicitly mentioned
+    # this "replace-all" batch will delete all populators for this custom dimension 
+    # that aren't explicitly mentioned
     batch = tagging.Batch(True)
 
     # this batch will only upsert and delete as instructed, but do nothing with populators not mentioned
