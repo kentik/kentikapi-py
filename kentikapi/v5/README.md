@@ -82,8 +82,8 @@ criteria per value, and all existing populators for this value will be replaced 
 ### Deleting populator values
 
 If the batch was defined with `False` passed into the constructor, you can still delete specific populator values.
-These deletes occur before the upserts, and since the upserts replace all existing populators for the specified values,
-there's no need to list values here that are also listed in upserts - they'd be ignored anyway:
+Since the upserts replace all existing populators for the specified values, there's no need to list values here
+that are also listed in upserts - they'd be ignored anyway:
 
     batch.add_delete('column_value')   # (set the appropriate value for the populator(s) being deleted)
 
