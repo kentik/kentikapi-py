@@ -144,6 +144,22 @@ class Criteria:
         self._json_dict['ports'].append("%d-%d" % (start, end))
 
 
+    def add_vlan(self, vlan):
+        if vlan < 0 or vlan > 4095:
+            raise ValueError("Invalid vlan. Valid: 0-4095.")
+        self._ensure_array('vlans')
+        self._json_dict['vlans'].append(str(vlan))
+
+
+    def add_vlan_range(self, start, end):
+        if start < 0 or start > 4095:
+            raise ValueError("Invalid start vlan. Valid: 0-4095.")
+        if end < 0 or end > 4095:
+            raise ValueError("Invalid end vlan. Valid: 0-4095.")
+        self._ensure_array('vlans')
+        self._json_dict['vlans'].append("%d-%d" % (start, end))
+
+
     def add_protocol(self, protocol):
         if protocol < 0 or protocol > 255:
             raise ValueError("Invalid protocol. Valid: 0-255.")

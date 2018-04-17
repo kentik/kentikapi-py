@@ -79,6 +79,11 @@ crit.add_port(1000)
 crit.add_port(555)
 crit.add_port(666)
 crit.add_port(44)
+crit.add_port_range(10, 100)
+
+# vlans
+crit.add_vlan(10)
+crit.add_vlan_range(200, 300)
 
 # protocols
 crit.add_protocol(1)
