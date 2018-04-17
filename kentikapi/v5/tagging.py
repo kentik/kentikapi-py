@@ -362,11 +362,11 @@ class Client:
 
     # submit a populator batch
     def submit_populator_batch(self, column_name, batch):
-        url = 'https://api.kentik.com/api/v5/tagging/column/%s/populators' % column_name
+        url = 'https://api.kentik.com/api/v5/batch/customdimensions/%s/populators' % column_name
         self._submit_batch(url, batch)
 
 
     # submit a tag batch
     def submit_tag_batch(self, batch):
-        url = 'https://api.kentik.com/api/v5/tagging/tags'
+        url = 'https://api.kentik.com/api/v5/batch/tags'
         self._submit_batch(url, batch)
