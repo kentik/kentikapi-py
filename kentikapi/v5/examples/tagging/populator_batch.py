@@ -1,4 +1,10 @@
+# these two lines are only necessary for local development
+import sys
+sys.path.append("../../../../")
+
+# if the module is already in your include path, you just need the following:
 from kentikapi.v5 import tagging
+import random
 
 #
 # Example: Replacing all populators for a Hyperscale custom dimension
@@ -11,9 +17,9 @@ from kentikapi.v5 import tagging
 
 # ---------------------------------------------------
 # Change these options:
-option_api_email = 'me@email.com'
-option_api_token = '123456d77afce9c33c09f8b88b52ff38'
-option_custom_dimension = 'c_my_column'
+option_api_email = '<YOUR-EMAIL-HERE>'
+option_api_token = '07276002d6626e7559f52bbc910b7d4f'
+option_custom_dimension = 'c_YOUR_COLUMN_NAME'
 # ---------------------------------------------------
 
 
@@ -158,6 +164,12 @@ crit.add_next_hop_ip_address("1.0.0.0/8")
 
 batch.add_upsert("complicated_tag", crit)
 
+# add a bunch of criteria with random IP addresses
+for val_num in range(1,100):
+    crit = tagging.Criteria("src")
+    for ip_num in range(1,100):
+        crit.add_ip_address(".".join(map(str, (random.randint(0, 255) for _ in range(4)))))
+    batch.add_upsert('val_%d' % val_num, crit)
 
 # -----
 # Delete some populators.
@@ -168,9 +180,9 @@ batch.add_delete("old_tag_1")
 batch.add_delete("old_tag_2")
 batch.add_delete("old_tag_3")
 
-
 # -----
 # Showtime! Submit the batch as populators for the configured custom dimension
+# - library will take care of chunking the requests into smaller HTTP payloads
 # -----
 client = tagging.Client(option_api_email, option_api_token)
 client.submit_populator_batch(option_custom_dimension, batch)
