@@ -422,6 +422,9 @@ class Client:
 
 
     def _submit_batch(self, url, batch):
+        """
+        submit the batch, returning the JSON->dict from the last HTTP response
+        """
         # TODO: validate column_name
         batch_parts = batch.parts()
 
@@ -434,6 +437,7 @@ class Client:
         }
 
         # submit each part
+        last_part = dict()
         for batch_part in batch_parts:
             # submit
             resp = requests.post(url, headers=headers, data=batch_part.build_json(guid))
@@ -443,23 +447,97 @@ class Client:
 
             # break out at first sign of trouble
             resp.raise_for_status()
-            guid = resp.json()['guid']
+            last_part = resp.json()
+            guid = last_part['guid']
             if guid == None or len(guid) == 0:
                 raise RuntimeError('guid not found in batch response')
+
+        return last_part
 
 
     # submit a populator batch
     def submit_populator_batch(self, column_name, batch):
+        """
+        Submit a populator batch as a series of HTTP requests in small chunks, returning the batch GUID,
+        or raising exception on error.
+        """
         if not Set(column_name).issubset(_allowedCustomDimensionChars):
             raise ValueError('Invalid custom dimension name "%s": must only contain letters, digits, underscores, and dashes' % column_name)
         if len(column_name) < 3 or len(column_name) > 20:
             raise ValueError('Invalid value "%s": must be between 3-20 characters' % column_name)
 
         url = 'https://api.kentik.com/api/v5/batch/customdimensions/%s/populators' % column_name
-        self._submit_batch(url, batch)
+        resp_json_dict = self._submit_batch(url, batch)
+        if resp_json_dict.get('error') != None:
+            raise RuntimeError('Error received from server: %s' % resp_json_dict['error'])
+
+        return resp_json_dict['guid']
 
 
     # submit a tag batch
     def submit_tag_batch(self, batch):
         url = 'https://api.kentik.com/api/v5/batch/tags'
         self._submit_batch(url, batch)
+
+
+    def fetch_batch_status(self, guid):
+        """
+        Fetch the status of a batch, given the guid
+        """
+        url = 'https://api.kentik.com/api/v5/batch/%s/status' % guid
+        headers = {
+                'user-agent': 'kentik-python-api/0.1',
+                'Content-Type': 'application/json',
+                'X-CH-Auth-Email': self.api_email,
+                'X-CH-Auth-API-Token': self.api_token
+        }
+
+        resp = requests.get(url, headers=headers)
+
+        # break out at first sign of trouble
+        resp.raise_for_status()
+        return BatchResponse(guid, resp.json())
+
+
+class BatchResponse:
+    """
+    Manages the response JSON from batch status check
+    """
+    def __init__(self, guid, status_dict):
+        self.guid = guid
+        self.status_dict = status_dict
+
+
+    def is_finished(self):
+        """
+        Returns whether the batch has finished processing
+        """
+        return not self.status_dict["is_pending"]
+
+
+    def invalid_upsert_count(self):
+        """
+        Returns how many invalid upserts were found in the batch
+        """
+        return int(self.status_dict['invalid_upsert_count'])
+
+
+    def invalid_delete_count(self):
+        """
+        Returns how many invalid deletes were found in the batch
+        """
+        return int(self.status_dict['invalid_delete_count'])
+
+
+    def full_response(self):
+        """
+        Return the full status JSON as a dictionary
+        """
+        return self.status_dict
+
+
+    def pretty_response(self):
+        """
+        Pretty print the full status response
+        """
+        return json.dumps(self.status_dict, indent=4)

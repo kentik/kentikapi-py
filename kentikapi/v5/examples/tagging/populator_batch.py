@@ -5,6 +5,7 @@ sys.path.append("../../../../")
 # if the module is already in your include path, you just need the following:
 from kentikapi.v5 import tagging
 import random
+import time
 
 #
 # Example: Replacing all populators for a Hyperscale custom dimension
@@ -17,9 +18,9 @@ import random
 
 # ---------------------------------------------------
 # Change these options:
-option_api_email = '<YOUR-EMAIL-HERE>'
-option_api_token = '07276002d6626e7559f52bbc910b7d4f'
-option_custom_dimension = 'c_YOUR_COLUMN_NAME'
+option_api_email = '<YOUR-EMAIL-ADDRESS>'
+option_api_token = '<YOUR-API-TOKEN>'
+option_custom_dimension = 'c_<YOUR-CUSTOM-DIMENSION>'
 # ---------------------------------------------------
 
 
@@ -34,7 +35,7 @@ batch = tagging.Batch(True)
 # -----
 
 crit = tagging.Criteria("dst")
-crit.add_ip_address("1.2.3.4")
+crit.add_ip_address("abcdefg")              # NOTE: this is an invalid IP address - status response reports this
 batch.add_upsert("src_ip1", crit)
 
 crit = tagging.Criteria("src")
@@ -185,4 +186,16 @@ batch.add_delete("old_tag_3")
 # - library will take care of chunking the requests into smaller HTTP payloads
 # -----
 client = tagging.Client(option_api_email, option_api_token)
-client.submit_populator_batch(option_custom_dimension, batch)
+guid = client.submit_populator_batch(option_custom_dimension, batch)
+
+# wait up to 60 seconds for the batch to finish:
+for x in range(1,12):
+    time.sleep(5)
+    status = client.fetch_batch_status(guid)
+    if status.is_finished():
+        print "is_finished: %s" % str(status.is_finished())
+        print "upsert_error_count: %s" % str(status.invalid_upsert_count())
+        print "delete_error_count: %s" % str(status.invalid_delete_count())
+        print
+        print status.pretty_response()
+        exit()
