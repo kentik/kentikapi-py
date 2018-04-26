@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='kentikapi',
-    version='0.1.0',
+    version='0.1.2',
     author='Blake Caldwell',
     packages=find_packages(),
     url='https://github.com/kentik/api-client',
