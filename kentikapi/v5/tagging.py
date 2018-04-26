@@ -75,7 +75,6 @@ class Batch(object):
         for value in self.upserts:
             if (part_size + self.upserts_size[value]) >= max_upload_size:
                 # this record would put us over the limit - close out the batch part and start a new one
-                print("Finished batch: %d" % part_size)
                 parts.append(BatchPart(self.replace_all, upserts, deletes))
                 upserts = dict()
                 deletes = []
