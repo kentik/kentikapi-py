@@ -1,17 +1,22 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+from builtins import str
+from builtins import object
 import json
+
 import requests
-from sets import Set
 
-#
-# HyperScale Tagging API client
-#
 
-_allowedValueChars = Set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_')
+"""HyperScale Tagging API client"""
+
+_allowedValueChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_')
 _allowedCustomDimensionChars = _allowedValueChars
 
-# ----------------------------------------
-# Batch collects tags or populators as values and criteria.
-class Batch:
+
+class Batch(object):
+    """Batch collects tags or populators as values and criteria."""
+
     def __init__(self, replace_all):
         self.replace_all = replace_all
         self.upserts = dict()
@@ -19,18 +24,18 @@ class Batch:
         self.deletes = set()
 
     def _validate_value(self, value):
-        if not Set(value).issubset(_allowedValueChars):
+        if not set(value).issubset(_allowedValueChars):
             raise ValueError('Invalid value "%s": must only contain letters, digits, underscores, and dashes' % value)
         if len(value) < 2 or len(value) > 20:
             raise ValueError('Invalid value "%s": must be between 2-20 characters' % value)
 
-    # add a tag or populator to the batch by value and criteria
     def add_upsert(self, value, criteria):
+        """Add a tag or populator to the batch by value and criteria"""
         self._validate_value(value)
 
         v = value.lower()
         criteria_array = self.upserts.get(v)
-        if criteria_array == None:
+        if criteria_array is None:
             criteria_array = []
             # start with # '{"value": "some_value", "criteria": []}, '
             self.upserts_size[v] = 31 + len(value)
@@ -38,9 +43,8 @@ class Batch:
         self.upserts[v] = criteria_array
         self.upserts_size[v] += criteria.json_size()
 
-
-    # delete a tag or populator by value - these are processed before upserts
     def add_delete(self, value):
+        """Delete a tag or populator by value - these are processed before upserts"""
         self._validate_value(value)
 
         v = value.strip().lower()
@@ -49,8 +53,9 @@ class Batch:
 
         self.deletes.add(v)
 
-    # return an array of batch parts to submit
     def parts(self):
+        """Return an array of batch parts to submit"""
+
         parts = []
 
         upserts = dict()
@@ -61,15 +66,16 @@ class Batch:
         max_upload_size = 3500000
 
         # loop upserts first - fit the deletes in afterward
-        base_part_size = 118 # '{"replace_all": true, "complete": false, "guid": "6659fbfc-3f08-42ee-998c-9109f650f4b7", "upserts": [], "deletes": []}'
+        # '{"replace_all": true, "complete": false, "guid": "6659fbfc-3f08-42ee-998c-9109f650f4b7", "upserts": [], "deletes": []}'
+        base_part_size = 118
         if not self.replace_all:
-            base_part_size += 1 # yeah, this is totally overkill :)
+            base_part_size += 1  # yeah, this is totally overkill :)
 
         part_size = base_part_size
         for value in self.upserts:
             if (part_size + self.upserts_size[value]) >= max_upload_size:
                 # this record would put us over the limit - close out the batch part and start a new one
-                print "Finished batch: %d" % part_size
+                print("Finished batch: %d" % part_size)
                 parts.append(BatchPart(self.replace_all, upserts, deletes))
                 upserts = dict()
                 deletes = []
@@ -86,7 +92,7 @@ class Batch:
                 deletes = []
                 part_size = base_part_size
 
-            deletes.append({ 'value': value })
+            deletes.append({'value': value})
             part_size += len(value) + 4
 
         if len(upserts) + len(deletes) > 0:
@@ -94,7 +100,7 @@ class Batch:
             parts.append(BatchPart(self.replace_all, upserts, deletes))
 
         if len(parts) == 0:
-            if self.replace_all == False:
+            if not self.replace_all:
                 raise ValueError("Batch has no data, and 'replace_all' is False")
             parts.append(BatchPart(self.replace_all, dict(), []))
 
@@ -103,9 +109,9 @@ class Batch:
         return parts
 
 
-# ----------------------------------------
-# BatchPart contains tags/populators to be sent as part of a (potentially) multi-part logical batch
-class BatchPart:
+class BatchPart(object):
+    """BatchPart contains tags/populators to be sent as part of a (potentially) multi-part logical batch"""
+
     def __init__(self, replace_all, upserts, deletes):
         if replace_all not in [True, False]:
             raise ValueError("Invalid value for replace_all. Must be True or False.")
@@ -115,27 +121,28 @@ class BatchPart:
         self.upserts = upserts
         self.deletes = deletes
 
-
-    # marks this part as the last to be sent for a logical batch
     def set_last_part(self):
+        """Marks this part as the last to be sent for a logical batch"""
         self.complete = True
 
-
-    # build JSON with the input guid
     def build_json(self, guid):
+        """Build JSON with the input guid"""
         upserts = []
         for value in self.upserts:
-            upserts.append({ "value": value, "criteria": self.upserts[value] })
-        return json.dumps({'replace_all': self.replace_all, 'guid': guid, 'complete': self.complete, 'upserts': upserts, 'deletes': self.deletes})
+            upserts.append({"value": value, "criteria": self.upserts[value]})
+        return json.dumps({'replace_all': self.replace_all, 'guid': guid,
+                           'complete': self.complete, 'upserts': upserts, 'deletes': self.deletes})
 
 
-# ----------------------------------------
-# Criteria defines a set of rules that must match for a tag or populator.
-# A flow record is tagged with this value if it matches at least one value from each non-empty criteria.
-class Criteria:
+class Criteria(object):
+    """Criteria defines a set of rules that must match for a tag or populator.
+
+    A flow record is tagged with this value if it matches at least one value from each non-empty criteria."""
+
     def __init__(self, direction):
-        # try to approximate the string size as we add to the criteria - starts with curly brackets, comma, space, length of direction
-        self._size = len(direction) + 20 # from '{"direction": "", } '
+        # try to approximate the string size as we add to the criteria - starts
+        # with curly brackets, comma, space, length of direction
+        self._size = len(direction) + 20  # from '{"direction": "", } '
         self._json_dict = dict()
 
         v = direction.lower()
@@ -144,28 +151,23 @@ class Criteria:
         self._json_dict['direction'] = v
         self._has_field = False
 
-
     def to_dict(self):
         return self._json_dict
 
     def json_size(self):
-        """
-        Return the approximate size of this criteria represented as JSON
-        """
+        """Return the approximate size of this criteria represented as JSON"""
         return self._size
 
-
     def _ensure_field(self, key):
-        """ ensure a non-array field """
+        """Ensure a non-array field"""
         if self._has_field:
             self._size += 2  # comma, space
         self._has_field = True
 
         self._size += len(key) + 4  # 2 quotes, colon, space
 
-
     def _ensure_array(self, key, value):
-        """ ensure an array field """
+        """Ensure an array field"""
         if key not in self._json_dict:
             self._json_dict[key] = []
 
@@ -176,18 +178,16 @@ class Criteria:
             # this array already has an entry, so add comma and space
             self._size += 2
 
-        if type(value) is str:
+        if isinstance(value, str):
             self._size += 2  # quotes
         self._size += len(str(value))
 
         self._json_dict[key].append(value)
 
-
     def add_port(self, port):
         if port < 0 or port > 65535:
             raise ValueError("Invalid port. Valid: 0-65535.")
         self._ensure_array('ports', str(port))
-
 
     def add_port_range(self, start, end):
         if start < 0 or start > 65535:
@@ -202,12 +202,10 @@ class Criteria:
         ports_str = "%d-%d" % (start, end)
         self._ensure_array('ports', ports_str)
 
-
     def add_vlan(self, vlan):
         if vlan < 0 or vlan > 4095:
             raise ValueError("Invalid vlan. Valid: 0-4095.")
         self._ensure_array('vlans', str(vlan))
-
 
     def add_vlan_range(self, start, end):
         if start < 0 or start > 4095:
@@ -221,18 +219,15 @@ class Criteria:
 
         self._ensure_array('vlans', '%d-%d' % (start, end))
 
-
     def add_protocol(self, protocol):
         if protocol < 0 or protocol > 255:
             raise ValueError("Invalid protocol. Valid: 0-255.")
 
         self._ensure_array('protocols', protocol)
 
-
     def add_asn(self, asn):
         _validate_asn(asn)
         self._ensure_array('asns', str(asn))
-
 
     def add_asn_range(self, start, end):
         _validate_asn(start)
@@ -247,7 +242,6 @@ class Criteria:
 
         self._ensure_array('asns', '%d-%d' % (start, end))
 
-
     def add_last_hop_asn_name(self, last_hop_asn_name):
         v = last_hop_asn_name.strip()
         if len(v) == 0:
@@ -255,11 +249,9 @@ class Criteria:
 
         self._ensure_array('last_hop_asn_names', v)
 
-
     def add_next_hop_asn(self, next_hop_asn):
         _validate_asn(next_hop_asn)
         self._ensure_array('next_hop_asns', str(next_hop_asn))
-
 
     def add_next_hop_asn_range(self, start, end):
         if start == end:
@@ -270,14 +262,12 @@ class Criteria:
         _validate_asn(end)
         self._ensure_array('next_hop_asns', '%d-%d' % (start, end))
 
-
     def add_next_hop_asn_name(self, next_hop_asn_name):
         v = next_hop_asn_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid next_hop_asn_name. Value is empty.")
 
         self._ensure_array('next_hop_asn_names', v)
-
 
     def add_bgp_as_path(self, bgp_as_path):
         v = bgp_as_path.strip()
@@ -287,7 +277,6 @@ class Criteria:
         # TODO: validate
         self._ensure_array('bgp_as_paths', v)
 
-
     def add_bgp_community(self, bgp_community):
         v = bgp_community.strip()
         if len(v) == 0:
@@ -296,15 +285,15 @@ class Criteria:
         # TODO: validate
         self._ensure_array('bgp_communities', v)
 
-
-    # add a single TCP flag - will be OR'd into the existing bitmask
     def add_tcp_flag(self, tcp_flag):
+        """Add a single TCP flag - will be OR'd into the existing bitmask"""
+
         if tcp_flag not in [1, 2, 4, 8, 16, 32, 64, 128]:
             raise ValueError("Invalid TCP flag. Valid: [1, 2, 4, 8, 16,32, 64, 128]")
 
         prev_size = 0
 
-        if self._json_dict.get('tcp_flags') == None:
+        if self._json_dict.get('tcp_flags') is None:
             self._json_dict['tcp_flags'] = 0
         else:
             prev_size = len(str(self._json_dict['tcp_flags'])) + len('tcp_flags') + 3  # str, key, key quotes, colon
@@ -319,14 +308,14 @@ class Criteria:
             self._size += 2
         self._has_field = True
 
-
-    # set the complete tcp flag bitmask
     def set_tcp_flags(self, tcp_flags):
+        """Set the complete tcp flag bitmask"""
+
         if tcp_flags < 0 or tcp_flags > 255:
             raise ValueError("Invalid tcp_flags. Valid: 0-255.")
 
         prev_size = 0
-        if self._json_dict.get('tcp_flags') != None:
+        if self._json_dict.get('tcp_flags') is not None:
             prev_size = len(str(self._json_dict['tcp_flags'])) + len('tcp_flags') + 3  # str, key, key quotes, colon
 
         self._json_dict['tcp_flags'] = tcp_flags
@@ -340,7 +329,6 @@ class Criteria:
             self._size += 2
         self._has_field = True
 
-
     def add_ip_address(self, ip_address):
         v = ip_address.strip()
         if len(v) == 0:
@@ -348,7 +336,6 @@ class Criteria:
 
         # TODO: validate?
         self._ensure_array('ip_addresses', v)
-
 
     def add_mac_address(self, mac_address):
         v = mac_address.strip()
@@ -358,7 +345,6 @@ class Criteria:
         # TODO: validate?
         self._ensure_array('mac_addresses', v)
 
-
     def add_country_code(self, country_code):
         v = country_code.strip()
         if len(v) == 0:
@@ -367,14 +353,12 @@ class Criteria:
         # TODO: validate?
         self._ensure_array('country_codes', v)
 
-
     def add_site_name(self, site_name):
         v = site_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid site_name. Value is empty.")
 
         self._ensure_array('site_names', v)
-
 
     def add_device_type(self, device_type):
         v = device_type.strip()
@@ -383,7 +367,6 @@ class Criteria:
 
         self._ensure_array('device_types', v)
 
-
     def add_interface_name(self, interface_name):
         v = interface_name.strip()
         if len(v) == 0:
@@ -391,14 +374,12 @@ class Criteria:
 
         self._ensure_array('interface_names', v)
 
-
     def add_device_name(self, device_name):
         v = device_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid device_name. Value is empty.")
 
         self._ensure_array('device_names', v)
-
 
     def add_next_hop_ip_address(self, next_hop_ip_address):
         v = next_hop_ip_address.strip()
@@ -413,28 +394,25 @@ def _validate_asn(asn):
         raise ValueError("Invalid ASN. Valid: 0-4294967295")
 
 
-# ----------------------------------------
-# Tagging client submits HyperScale batches to Kentik
-class Client:
+class Client(object):
+    """Tagging client submits HyperScale batches to Kentik"""
+
     def __init__(self, api_email, api_token, base_url='https://api.kentik.com'):
-        self.base_url = base_url
         self.api_email = api_email
         self.api_token = api_token
-
+        self.base_url = base_url
 
     def _submit_batch(self, url, batch):
-        """
-        submit the batch, returning the JSON->dict from the last HTTP response
-        """
+        """Submit the batch, returning the JSON->dict from the last HTTP response"""
         # TODO: validate column_name
         batch_parts = batch.parts()
 
         guid = ""
         headers = {
-                'user-agent': 'kentik-python-api/0.1',
-                'Content-Type': 'application/json',
-                'X-CH-Auth-Email': self.api_email,
-                'X-CH-Auth-API-Token': self.api_token
+            'User-Agent': 'kentik-python-api/0.1',
+            'Content-Type': 'application/json',
+            'X-CH-Auth-Email': self.api_email,
+            'X-CH-Auth-API-Token': self.api_token
         }
 
         # submit each part
@@ -444,53 +422,47 @@ class Client:
             resp = requests.post(url, headers=headers, data=batch_part.build_json(guid))
 
             # print the HTTP response to help debug
-            print resp.text
+            print(resp.text)
 
             # break out at first sign of trouble
             resp.raise_for_status()
             last_part = resp.json()
             guid = last_part['guid']
-            if guid == None or len(guid) == 0:
+            if guid is None or len(guid) == 0:
                 raise RuntimeError('guid not found in batch response')
 
         return last_part
 
-
-    # submit a populator batch
     def submit_populator_batch(self, column_name, batch):
-        """
-        Submit a populator batch as a series of HTTP requests in small chunks, returning the batch GUID,
-        or raising exception on error.
-        """
-        if not Set(column_name).issubset(_allowedCustomDimensionChars):
+        """Submit a populator batch
+
+        Submit a populator batch as a series of HTTP requests in small chunks,
+        returning the batch GUID, or raising exception on error."""
+        if not set(column_name).issubset(_allowedCustomDimensionChars):
             raise ValueError('Invalid custom dimension name "%s": must only contain letters, digits, underscores, and dashes' % column_name)
         if len(column_name) < 3 or len(column_name) > 20:
             raise ValueError('Invalid value "%s": must be between 3-20 characters' % column_name)
 
         url = '%s/api/v5/batch/customdimensions/%s/populators' % (self.base_url, column_name)
         resp_json_dict = self._submit_batch(url, batch)
-        if resp_json_dict.get('error') != None:
+        if resp_json_dict.get('error') is not None:
             raise RuntimeError('Error received from server: %s' % resp_json_dict['error'])
 
         return resp_json_dict['guid']
 
-
-    # submit a tag batch
     def submit_tag_batch(self, batch):
+        """Submit a tag batch"""
         url = '%s/api/v5/batch/tags' % self.base_url
         self._submit_batch(url, batch)
 
-
     def fetch_batch_status(self, guid):
-        """
-        Fetch the status of a batch, given the guid
-        """
+        """Fetch the status of a batch, given the guid"""
         url = '%s/api/v5/batch/%s/status' % (self.base_url, guid)
         headers = {
-                'user-agent': 'kentik-python-api/0.1',
-                'Content-Type': 'application/json',
-                'X-CH-Auth-Email': self.api_email,
-                'X-CH-Auth-API-Token': self.api_token
+            'User-Agent': 'kentik-python-api/0.1',
+            'Content-Type': 'application/json',
+            'X-CH-Auth-Email': self.api_email,
+            'X-CH-Auth-API-Token': self.api_token
         }
 
         resp = requests.get(url, headers=headers)
@@ -500,45 +472,29 @@ class Client:
         return BatchResponse(guid, resp.json())
 
 
-class BatchResponse:
-    """
-    Manages the response JSON from batch status check
-    """
+class BatchResponse(object):
+    """Manages the response JSON from batch status check"""
+
     def __init__(self, guid, status_dict):
         self.guid = guid
         self.status_dict = status_dict
 
-
     def is_finished(self):
-        """
-        Returns whether the batch has finished processing
-        """
+        """Returns whether the batch has finished processing"""
         return not self.status_dict["is_pending"]
 
-
     def invalid_upsert_count(self):
-        """
-        Returns how many invalid upserts were found in the batch
-        """
+        """Returns how many invalid upserts were found in the batch"""
         return int(self.status_dict['invalid_upsert_count'])
 
-
     def invalid_delete_count(self):
-        """
-        Returns how many invalid deletes were found in the batch
-        """
+        """Returns how many invalid deletes were found in the batch"""
         return int(self.status_dict['invalid_delete_count'])
 
-
     def full_response(self):
-        """
-        Return the full status JSON as a dictionary
-        """
+        """Return the full status JSON as a dictionary"""
         return self.status_dict
 
-
     def pretty_response(self):
-        """
-        Pretty print the full status response
-        """
+        """Pretty print the full status response"""
         return json.dumps(self.status_dict, indent=4)

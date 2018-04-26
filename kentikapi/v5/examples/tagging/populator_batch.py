@@ -1,11 +1,13 @@
-# these two lines are only necessary for local development
-import sys
-sys.path.append("../../../../")
+#!/usr/bin/env python
 
-# if the module is already in your include path, you just need the following:
+from __future__ import print_function
+from builtins import str
+from builtins import map
+from builtins import range
 from kentikapi.v5 import tagging
 import random
 import time
+
 
 #
 # Example: Replacing all populators for a Hyperscale custom dimension
@@ -35,7 +37,8 @@ batch = tagging.Batch(True)
 # -----
 
 crit = tagging.Criteria("dst")
-crit.add_ip_address("abcdefg")              # NOTE: this is an invalid IP address - status response reports this
+# NOTE: this is an invalid IP address - status response reports this
+crit.add_ip_address("abcdefg")
 batch.add_upsert("src_ip1", crit)
 
 crit = tagging.Criteria("src")
@@ -166,10 +169,11 @@ crit.add_next_hop_ip_address("1.0.0.0/8")
 batch.add_upsert("complicated_tag", crit)
 
 # add a bunch of criteria with random IP addresses
-for val_num in range(1,100):
+for val_num in range(1, 100):
     crit = tagging.Criteria("src")
-    for ip_num in range(1,100):
-        crit.add_ip_address(".".join(map(str, (random.randint(0, 255) for _ in range(4)))))
+    for ip_num in range(1, 100):
+        crit.add_ip_address(
+            ".".join(map(str, (random.randint(0, 255) for _ in range(4)))))
     batch.add_upsert('val_%d' % val_num, crit)
 
 # -----
@@ -189,13 +193,13 @@ client = tagging.Client(option_api_email, option_api_token)
 guid = client.submit_populator_batch(option_custom_dimension, batch)
 
 # wait up to 60 seconds for the batch to finish:
-for x in range(1,12):
+for x in range(1, 12):
     time.sleep(5)
     status = client.fetch_batch_status(guid)
     if status.is_finished():
-        print "is_finished: %s" % str(status.is_finished())
-        print "upsert_error_count: %s" % str(status.invalid_upsert_count())
-        print "delete_error_count: %s" % str(status.invalid_delete_count())
-        print
-        print status.pretty_response()
-        exit()
+        print("is_finished: %s" % str(status.is_finished()))
+        print("upsert_error_count: %s" % str(status.invalid_upsert_count()))
+        print("delete_error_count: %s" % str(status.invalid_delete_count()))
+        print()
+        print(status.pretty_response())
+        break
