@@ -416,7 +416,8 @@ def _validate_asn(asn):
 # ----------------------------------------
 # Tagging client submits HyperScale batches to Kentik
 class Client:
-    def __init__(self, api_email, api_token):
+    def __init__(self, api_email, api_token, base_url='https://api.kentik.com'):
+        self.base_url = base_url
         self.api_email = api_email
         self.api_token = api_token
 
@@ -466,7 +467,7 @@ class Client:
         if len(column_name) < 3 or len(column_name) > 20:
             raise ValueError('Invalid value "%s": must be between 3-20 characters' % column_name)
 
-        url = 'https://api.kentik.com/api/v5/batch/customdimensions/%s/populators' % column_name
+        url = '%s/api/v5/batch/customdimensions/%s/populators' % (self.base_url, column_name)
         resp_json_dict = self._submit_batch(url, batch)
         if resp_json_dict.get('error') != None:
             raise RuntimeError('Error received from server: %s' % resp_json_dict['error'])
@@ -476,7 +477,7 @@ class Client:
 
     # submit a tag batch
     def submit_tag_batch(self, batch):
-        url = 'https://api.kentik.com/api/v5/batch/tags'
+        url = '%s/api/v5/batch/tags' % self.base_url
         self._submit_batch(url, batch)
 
 
@@ -484,7 +485,7 @@ class Client:
         """
         Fetch the status of a batch, given the guid
         """
-        url = 'https://api.kentik.com/api/v5/batch/%s/status' % guid
+        url = '%s/api/v5/batch/%s/status' % (self.base_url, guid)
         headers = {
                 'user-agent': 'kentik-python-api/0.1',
                 'Content-Type': 'application/json',
