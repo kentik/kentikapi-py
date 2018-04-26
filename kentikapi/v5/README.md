@@ -4,7 +4,7 @@ Kentik Python API
 HyperTagging API
 ----------------
 
-Kentik HyperTagging API allows asynchronous processing of large batches of tags and custom dimensions. 
+Kentik HyperTagging API allows asynchronous processing of large batches of tags and custom dimensions.
 A batch contains either tags or populators for a single custom dimension. A populator or tag is represented
 by a `value`, and a `Criteria` object. The rest of this document will discuss custom dimension populators,
 but also applies to tags when a tag batch is submitted.
@@ -12,9 +12,9 @@ but also applies to tags when a tag batch is submitted.
 
 ### Using the Kentik HyperTagging batch API
 
-Declare the source of the Kentik API module in your `requirements.txt`:
+Add the Kentik API module as a dependency, eg. by adding it to `requirements.txt`:
 
-    git+https://github.com/kentik/api-client#egg=kentikapi
+    echo kentikapi >> requirements.txt
 
 Create a virtual environment, and fetch the Kentik API module:
 
@@ -30,11 +30,11 @@ In your Python code, import the tagging classes of the API module:
 
 The batch constructor takes a single parameter, a boolean that signals whether the batch processor should
 delete any populators for this custom dimension that are not explicitly mentioned in the batch. If you pass
-`True` into the constructor, then you must submit the entire state of this custom dimension. With this 
+`True` into the constructor, then you must submit the entire state of this custom dimension. With this
 "replace-all" functionality, you never need to keep track of what populators are already defined in the Kentik
 database - the batch processor takes care of all of that for you.
 
-    # this "replace-all" batch will delete all populators for this custom dimension 
+    # this "replace-all" batch will delete all populators for this custom dimension
     # that aren't explicitly mentioned
     batch = tagging.Batch(True)
 
@@ -74,7 +74,7 @@ Add conditions to the criteria with the following methods:
 - `set_tcp_flags(tcp_flag<int>)`
 
 Add the criteria to the batch. The batch processor will decide if this is an insert or upsert. You can have multiple
-criteria per value, and all existing populators for this value will be replaced with what's in the batch. 
+criteria per value, and all existing populators for this value will be replaced with what's in the batch.
 
     batch.add_upsert('column_value', crit)    # (set the appropriate value for this populator)
 
