@@ -1,1 +1,2 @@
-git+https://github.com/kentik/api-client#egg=kentikapi
+future
+kentikapi
