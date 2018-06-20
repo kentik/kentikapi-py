@@ -62,8 +62,8 @@ class Batch(object):
         deletes = []
 
         # we keep track of the batch size as we go (pretty close approximation!) so we can chunk it small enough
-        # to limit the HTTP posts to under 3.5MB
-        max_upload_size = 3500000
+        # to limit the HTTP posts to under 700KB - server limits to 750KB, so play it safe
+        max_upload_size = 700000
 
         # loop upserts first - fit the deletes in afterward
         # '{"replace_all": true, "complete": false, "guid": "6659fbfc-3f08-42ee-998c-9109f650f4b7", "upserts": [], "deletes": []}'
