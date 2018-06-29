@@ -186,7 +186,7 @@ class Criteria(object):
     def add_port(self, port):
         if port < 0 or port > 65535:
             raise ValueError("Invalid port. Valid: 0-65535.")
-        self._ensure_array('ports', str(port))
+        self._ensure_array('port', str(port))
 
     def add_port_range(self, start, end):
         if start < 0 or start > 65535:
@@ -199,7 +199,7 @@ class Criteria(object):
             return
 
         ports_str = "%d-%d" % (start, end)
-        self._ensure_array('ports', ports_str)
+        self._ensure_array('port', ports_str)
 
     def add_vlan(self, vlan):
         if vlan < 0 or vlan > 4095:
@@ -222,11 +222,11 @@ class Criteria(object):
         if protocol < 0 or protocol > 255:
             raise ValueError("Invalid protocol. Valid: 0-255.")
 
-        self._ensure_array('protocols', protocol)
+        self._ensure_array('protocol', protocol)
 
     def add_asn(self, asn):
         _validate_asn(asn)
-        self._ensure_array('asns', str(asn))
+        self._ensure_array('asn', str(asn))
 
     def add_asn_range(self, start, end):
         _validate_asn(start)
@@ -239,18 +239,18 @@ class Criteria(object):
             self.add_asn(start)
             return
 
-        self._ensure_array('asns', '%d-%d' % (start, end))
+        self._ensure_array('asn', '%d-%d' % (start, end))
 
     def add_last_hop_asn_name(self, last_hop_asn_name):
         v = last_hop_asn_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid last_hop_asn_name. Value is empty.")
 
-        self._ensure_array('last_hop_asn_names', v)
+        self._ensure_array('lasthop_as_name', v)
 
     def add_next_hop_asn(self, next_hop_asn):
         _validate_asn(next_hop_asn)
-        self._ensure_array('next_hop_asns', str(next_hop_asn))
+        self._ensure_array('nexthop_asn', str(next_hop_asn))
 
     def add_next_hop_asn_range(self, start, end):
         if start == end:
@@ -259,14 +259,14 @@ class Criteria(object):
 
         _validate_asn(start)
         _validate_asn(end)
-        self._ensure_array('next_hop_asns', '%d-%d' % (start, end))
+        self._ensure_array('nextohp_as_name', '%d-%d' % (start, end))
 
     def add_next_hop_asn_name(self, next_hop_asn_name):
         v = next_hop_asn_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid next_hop_asn_name. Value is empty.")
 
-        self._ensure_array('next_hop_asn_names', v)
+        self._ensure_array('nexthop_as_name', v)
 
     def add_bgp_as_path(self, bgp_as_path):
         v = bgp_as_path.strip()
@@ -274,7 +274,7 @@ class Criteria(object):
             raise ValueError("Invalid bgp_as_path. Value is empty.")
 
         # TODO: validate
-        self._ensure_array('bgp_as_paths', v)
+        self._ensure_array('bgp_aspath', v)
 
     def add_bgp_community(self, bgp_community):
         v = bgp_community.strip()
@@ -282,7 +282,7 @@ class Criteria(object):
             raise ValueError("Invalid bgp_community. Value is empty.")
 
         # TODO: validate
-        self._ensure_array('bgp_communities', v)
+        self._ensure_array('bgp_community', v)
 
     def add_tcp_flag(self, tcp_flag):
         """Add a single TCP flag - will be OR'd into the existing bitmask"""
@@ -334,7 +334,7 @@ class Criteria(object):
             raise ValueError("Invalid ip_address. Value is empty.")
 
         # TODO: validate?
-        self._ensure_array('ip_addresses', v)
+        self._ensure_array('addr', v)
 
     def add_mac_address(self, mac_address):
         v = mac_address.strip()
@@ -342,7 +342,7 @@ class Criteria(object):
             raise ValueError("Invalid mac_address. Value is empty.")
 
         # TODO: validate?
-        self._ensure_array('mac_addresses', v)
+        self._ensure_array('mac', v)
 
     def add_country_code(self, country_code):
         v = country_code.strip()
@@ -350,42 +350,42 @@ class Criteria(object):
             raise ValueError("Invalid country_code. Value is empty.")
 
         # TODO: validate?
-        self._ensure_array('country_codes', v)
+        self._ensure_array('country', v)
 
     def add_site_name(self, site_name):
         v = site_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid site_name. Value is empty.")
 
-        self._ensure_array('site_names', v)
+        self._ensure_array('site', v)
 
     def add_device_type(self, device_type):
         v = device_type.strip()
         if len(v) == 0:
             raise ValueError("Invalid device_type. Value is empty.")
 
-        self._ensure_array('device_types', v)
+        self._ensure_array('device_type', v)
 
     def add_interface_name(self, interface_name):
         v = interface_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid interface_name. Value is empty.")
 
-        self._ensure_array('interface_names', v)
+        self._ensure_array('interface_name', v)
 
     def add_device_name(self, device_name):
         v = device_name.strip()
         if len(v) == 0:
             raise ValueError("Invalid device_name. Value is empty.")
 
-        self._ensure_array('device_names', v)
+        self._ensure_array('device_name', v)
 
     def add_next_hop_ip_address(self, next_hop_ip_address):
         v = next_hop_ip_address.strip()
         if v == 0:
             raise ValueError("Invalid next_hop_ip_address. Value is empty.")
 
-        self._ensure_array('next_hop_ip_addresses', v)
+        self._ensure_array('nexthop', v)
 
 
 def _validate_asn(asn):
