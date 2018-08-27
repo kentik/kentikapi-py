@@ -10,7 +10,7 @@ import requests
 
 """HyperScale Tagging API client"""
 
-_allowedValueChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.@')
+_allowedValueChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.@/ ')
 _allowedCustomDimensionChars = _allowedValueChars
 
 
@@ -25,9 +25,9 @@ class Batch(object):
 
     def _validate_value(self, value):
         if not set(value).issubset(_allowedValueChars):
-            raise ValueError('Invalid value "%s": must only contain letters, digits, underscores, and dashes' % value)
-        if len(value) < 2 or len(value) > 60:
-            raise ValueError('Invalid value "%s": must be between 2-60 characters' % value)
+            raise ValueError('Invalid value "%s": must only contain letters, digits, underscores, dash, period, space, forward slash, and @' % value)
+        if len(value) < 1 or len(value) > 60:
+            raise ValueError('Invalid value "%s": must be between 1-60 characters' % value)
 
     def add_upsert(self, value, criteria):
         """Add a tag or populator to the batch by value and criteria"""
