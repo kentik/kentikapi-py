@@ -11,7 +11,7 @@ import requests
 """HyperScale Tagging API client"""
 
 _allowedValueChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.@/ ')
-_allowedCustomDimensionChars = _allowedValueChars
+_allowedCustomDimensionChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_')
 
 
 class Batch(object):
@@ -438,7 +438,7 @@ class Client(object):
         Submit a populator batch as a series of HTTP requests in small chunks,
         returning the batch GUID, or raising exception on error."""
         if not set(column_name).issubset(_allowedCustomDimensionChars):
-            raise ValueError('Invalid custom dimension name "%s": must only contain letters, digits, underscores, and dashes' % column_name)
+            raise ValueError('Invalid custom dimension name "%s": must only contain letters, digits, and underscores' % column_name)
         if len(column_name) < 3 or len(column_name) > 20:
             raise ValueError('Invalid value "%s": must be between 3-20 characters' % column_name)
 
