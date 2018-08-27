@@ -484,11 +484,11 @@ class BatchResponse(object):
 
     def invalid_upsert_count(self):
         """Returns how many invalid upserts were found in the batch"""
-        return int(self.status_dict['invalid_upsert_count'])
+        return int(self.status_dict['upserts']['invalid'])
 
     def invalid_delete_count(self):
         """Returns how many invalid deletes were found in the batch"""
-        return int(self.status_dict['invalid_delete_count'])
+        return int(self.status_dict['deletes']['invalid'])
 
     def full_response(self):
         """Return the full status JSON as a dictionary"""
