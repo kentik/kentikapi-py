@@ -9,8 +9,6 @@ import requests
 
 
 """HyperScale Tagging API client"""
-
-_allowedValueChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.@/ ')
 _allowedCustomDimensionChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_')
 
 
@@ -23,15 +21,8 @@ class Batch(object):
         self.upserts_size = dict()   # keep track of json str size per value
         self.deletes = set()
 
-    def _validate_value(self, value):
-        if not set(value).issubset(_allowedValueChars):
-            raise ValueError('Invalid value "%s": must only contain letters, digits, underscores, dash, period, space, forward slash, and @' % value)
-        if len(value) < 1 or len(value) > 60:
-            raise ValueError('Invalid value "%s": must be between 1-60 characters' % value)
-
     def add_upsert(self, value, criteria):
         """Add a tag or populator to the batch by value and criteria"""
-        self._validate_value(value)
 
         v = value.lower()
         criteria_array = self.upserts.get(v)
@@ -45,7 +36,6 @@ class Batch(object):
 
     def add_delete(self, value):
         """Delete a tag or populator by value - these are processed before upserts"""
-        self._validate_value(value)
 
         v = value.strip().lower()
         if len(v) == 0:
