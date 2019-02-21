@@ -17,6 +17,7 @@ class Batch(object):
 
     def __init__(self, replace_all):
         self.replace_all = replace_all
+        self.lower_val_to_val = dict()  # keeps track of the value casing passed in
         self.upserts = dict()
         self.upserts_size = dict()   # keep track of json str size per value
         self.deletes = set()
@@ -24,7 +25,9 @@ class Batch(object):
     def add_upsert(self, value, criteria):
         """Add a tag or populator to the batch by value and criteria"""
 
+        value = value.strip()
         v = value.lower()
+        self.lower_val_to_val[v] = value
         criteria_array = self.upserts.get(v)
         if criteria_array is None:
             criteria_array = []
@@ -37,7 +40,9 @@ class Batch(object):
     def add_delete(self, value):
         """Delete a tag or populator by value - these are processed before upserts"""
 
-        v = value.strip().lower()
+        value = value.strip()
+        v = value.lower()
+        self.lower_val_to_val[v] = value
         if len(v) == 0:
             raise ValueError("Invalid value for delete. Value is empty.")
 
@@ -70,7 +75,8 @@ class Batch(object):
                 deletes = []
                 part_size = base_part_size
 
-            upserts[value] = self.upserts[value]
+            # for the new upserts dict, drop the lower-casing of value
+            upserts[self.lower_val_to_val[value]] = self.upserts[value]
             part_size += self.upserts_size[value]    # updating the approximate size of the batch
 
         for value in self.deletes:
@@ -81,7 +87,8 @@ class Batch(object):
                 deletes = []
                 part_size = base_part_size
 
-            deletes.append({'value': value})
+            # for the new deletes set, drop the lower-casing of value
+            deletes.append({'value': self.lower_val_to_val[value]})
             part_size += len(value) + 4
 
         if len(upserts) + len(deletes) > 0:
@@ -121,7 +128,6 @@ class BatchPart(object):
             upserts.append({"value": value, "criteria": self.upserts[value]})
         return json.dumps({'replace_all': self.replace_all, 'guid': guid,
                            'complete': self.complete, 'upserts': upserts, 'deletes': self.deletes})
-
 
 class Criteria(object):
     """Criteria defines a set of rules that must match for a tag or populator.
