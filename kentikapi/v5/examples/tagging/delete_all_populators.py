@@ -1,4 +1,10 @@
+import logging
+
 from kentikapi.v5 import tagging
+
+logging.basicConfig()  # you need to initialize logging, otherwise you will not see anything from kentikapi
+logging.getLogger().setLevel(logging.DEBUG)
+
 
 #
 # Example: Delete all populators for a HyperScale custom dimension

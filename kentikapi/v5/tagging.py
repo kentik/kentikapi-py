@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
 from builtins import str
 from builtins import object
 import json
+import logging
 
 import requests
 
-
 """HyperScale Tagging API client"""
+
+log = logging.getLogger(__name__)
 
 _allowedValueChars = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_')
 _allowedCustomDimensionChars = _allowedValueChars
@@ -75,7 +76,7 @@ class Batch(object):
         for value in self.upserts:
             if (part_size + self.upserts_size[value]) >= max_upload_size:
                 # this record would put us over the limit - close out the batch part and start a new one
-                print("Finished batch: %d" % part_size)
+                log.info("Finished batch: %d" % part_size)
                 parts.append(BatchPart(self.replace_all, upserts, deletes))
                 upserts = dict()
                 deletes = []
@@ -422,7 +423,7 @@ class Client(object):
             resp = requests.post(url, headers=headers, data=batch_part.build_json(guid))
 
             # print the HTTP response to help debug
-            print(resp.text)
+            log.debug("_submit_batch: got response: %s", resp.text)
 
             # break out at first sign of trouble
             resp.raise_for_status()
