@@ -19,6 +19,7 @@ Add the Kentik API module as a dependency, eg. by adding it to `requirements.txt
 Create a virtual environment, and fetch the Kentik API module:
 
     virtualenv venv
+    source ./venv/bin/activate
     pip install -r requirements.txt
 
 In your Python code, import the tagging classes of the API module:
